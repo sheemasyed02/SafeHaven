@@ -17,11 +17,12 @@ class AuthState {
     User? user,
     bool? isLoading,
     String? error,
+    bool clearError = false,
   }) {
     return AuthState(
       user: user ?? this.user,
       isLoading: isLoading ?? this.isLoading,
-      error: error ?? this.error,
+      error: clearError ? null : (error ?? this.error),
     );
   }
 }
@@ -49,7 +50,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Sign in with email and password
   Future<void> signIn(String email, String password) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     
     try {
       final response = await _supabaseService.signIn(
@@ -64,18 +65,25 @@ class AuthNotifier extends StateNotifier<AuthState> {
           createdAt: DateTime.parse(response.user!.createdAt),
         );
         state = state.copyWith(user: user, isLoading: false);
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Login failed: No user returned',
+        );
       }
     } catch (e) {
+      print('SignIn Error: $e'); // Add debug logging
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
       );
+      rethrow; // Re-throw for UI handling
     }
   }
 
   /// Sign up with email and password
   Future<void> signUp(String email, String password) async {
-    state = state.copyWith(isLoading: true, error: null);
+    state = state.copyWith(isLoading: true, clearError: true);
     
     try {
       final response = await _supabaseService.signUp(
@@ -90,12 +98,19 @@ class AuthNotifier extends StateNotifier<AuthState> {
           createdAt: DateTime.parse(response.user!.createdAt),
         );
         state = state.copyWith(user: user, isLoading: false);
+      } else {
+        state = state.copyWith(
+          isLoading: false,
+          error: 'Signup failed: No user returned',
+        );
       }
     } catch (e) {
+      print('SignUp Error: $e'); // Add debug logging
       state = state.copyWith(
         isLoading: false,
         error: e.toString(),
       );
+      rethrow; // Re-throw for UI handling
     }
   }
 
@@ -116,7 +131,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   /// Clear error
   void clearError() {
-    state = state.copyWith(error: null);
+    state = state.copyWith(clearError: true);
   }
 }
 

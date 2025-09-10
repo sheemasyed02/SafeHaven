@@ -30,10 +30,27 @@ class SupabaseService {
     required String email,
     required String password,
   }) async {
-    return await client.auth.signUp(
-      email: email,
-      password: password,
-    );
+    try {
+      print('Attempting signup for: $email'); // Debug logging
+      final response = await client.auth.signUp(
+        email: email,
+        password: password,
+        emailRedirectTo: null, // Don't redirect after email confirmation
+      );
+      
+      print('Signup response: ${response.user?.id}'); // Debug logging
+      print('Email confirmed: ${response.user?.emailConfirmedAt != null}'); // Debug logging
+      
+      if (response.user != null && response.user!.emailConfirmedAt == null) {
+        print('⚠️ Email confirmation required. User created but not confirmed.');
+        print('Check your email for confirmation link.');
+      }
+      
+      return response;
+    } catch (e) {
+      print('Supabase signup error: $e'); // Debug logging
+      rethrow;
+    }
   }
 
   /// Sign in with email and password
@@ -41,10 +58,18 @@ class SupabaseService {
     required String email,
     required String password,
   }) async {
-    return await client.auth.signInWithPassword(
-      email: email,
-      password: password,
-    );
+    try {
+      print('Attempting signin for: $email'); // Debug logging
+      final response = await client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+      print('Signin response: ${response.user?.id}'); // Debug logging
+      return response;
+    } catch (e) {
+      print('Supabase signin error: $e'); // Debug logging
+      rethrow;
+    }
   }
 
   /// Sign out

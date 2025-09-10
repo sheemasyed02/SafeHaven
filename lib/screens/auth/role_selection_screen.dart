@@ -1,0 +1,217 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../widgets/custom_button.dart';
+import '../home_screen.dart';
+
+enum UserRole {
+  helpSeeker('Help Seeker', 'I need assistance and support', Icons.help_outline),
+  volunteer('Volunteer', 'I want to help others in need', Icons.volunteer_activism),
+  professional('Professional', 'I provide professional services', Icons.work_outline);
+
+  const UserRole(this.title, this.description, this.icon);
+  
+  final String title;
+  final String description;
+  final IconData icon;
+}
+
+class RoleSelectionScreen extends ConsumerStatefulWidget {
+  const RoleSelectionScreen({super.key});
+
+  @override
+  ConsumerState<RoleSelectionScreen> createState() => _RoleSelectionScreenState();
+}
+
+class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
+  UserRole? _selectedRole;
+  bool _isLoading = false;
+
+  Future<void> _continueWithRole() async {
+    if (_selectedRole == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // TODO: Save user role to Supabase user profile
+      // await ref.read(authProvider.notifier).updateUserRole(_selectedRole!);
+      
+      // For now, just navigate to home screen
+      await Future.delayed(const Duration(milliseconds: 500)); // Simulate API call
+      
+      if (mounted) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const HomeScreen(),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to set role: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 40),
+              
+              // Header
+              Text(
+                'Choose Your Role',
+                style: theme.textTheme.headlineLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.primary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Select how you want to use SafeHaven',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 40),
+
+              // Role options
+              Expanded(
+                child: Column(
+                  children: UserRole.values.map((role) {
+                    final isSelected = _selectedRole == role;
+                    
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      child: InkWell(
+                        onTap: _isLoading ? null : () {
+                          setState(() {
+                            _selectedRole = role;
+                          });
+                        },
+                        borderRadius: BorderRadius.circular(16),
+                        child: Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: isSelected 
+                                ? theme.colorScheme.primary 
+                                : theme.colorScheme.outline.withOpacity(0.3),
+                              width: isSelected ? 2 : 1,
+                            ),
+                            color: isSelected 
+                              ? theme.colorScheme.primary.withOpacity(0.1)
+                              : theme.colorScheme.surface,
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(12),
+                                decoration: BoxDecoration(
+                                  color: isSelected 
+                                    ? theme.colorScheme.primary
+                                    : theme.colorScheme.primary.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(
+                                  role.icon,
+                                  color: isSelected 
+                                    ? Colors.white
+                                    : theme.colorScheme.primary,
+                                  size: 28,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      role.title,
+                                      style: theme.textTheme.titleMedium?.copyWith(
+                                        fontWeight: FontWeight.w600,
+                                        color: isSelected 
+                                          ? theme.colorScheme.primary
+                                          : theme.colorScheme.onSurface,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      role.description,
+                                      style: theme.textTheme.bodyMedium?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (isSelected)
+                                Icon(
+                                  Icons.check_circle,
+                                  color: theme.colorScheme.primary,
+                                  size: 24,
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+
+              // Continue button
+              const SizedBox(height: 24),
+              CustomButton(
+                text: _isLoading ? 'Setting up...' : 'Continue',
+                onPressed: (_selectedRole == null || _isLoading) ? () {} : _continueWithRole,
+                backgroundColor: theme.colorScheme.primary,
+              ),
+              const SizedBox(height: 16),
+              
+              // Skip for now button
+              TextButton(
+                onPressed: _isLoading ? null : () {
+                  Navigator.of(context).pushReplacement(
+                    MaterialPageRoute(
+                      builder: (context) => const HomeScreen(),
+                    ),
+                  );
+                },
+                child: Text(
+                  'Skip for now',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

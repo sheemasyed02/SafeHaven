@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'screens/home_screen.dart';
+import 'widgets/auth_wrapper.dart';
 import 'services/map_service.dart';
 import 'services/supabase_service.dart';
-import 'services/notification_service.dart';
+// import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,18 +19,24 @@ void main() async {
 }
 
 Future<void> _initializeServices() async {
-  // TODO: Replace with your actual Supabase credentials
+  try {
+    print('Initializing Supabase...'); // Debug logging
+    await SupabaseService.instance.initialize(
+      url: 'https://xuyzomlepudifwfbxmrl.supabase.co',
+      anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1eXpvbWxlcHVkaWZ3ZmJ4bXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTMwMjMsImV4cCI6MjA3MzA2OTAyM30.ST5z0h3iYmiTLcBrowYLj3_fnAKZ2lXDRBmxKNr9xxY',
+    );
+    print('Supabase initialized successfully'); // Debug logging
 
-  await SupabaseService.instance.initialize(
-    url: 'https://xuyzomlepudifwfbxmrl.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh1eXpvbWxlcHVkaWZ3ZmJ4bXJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTc0OTMwMjMsImV4cCI6MjA3MzA2OTAyM30.ST5z0h3iYmiTLcBrowYLj3_fnAKZ2lXDRBmxKNr9xxY',
-  );
+    // TODO: Replace with your actual OneSignal App ID
+    // await NotificationService.instance.initialize('49783777-40d1-4d08-8b7f-1a503d3aab64');
 
-  // TODO: Replace with your actual OneSignal App ID
-  await NotificationService.instance.initialize('49783777-40d1-4d08-8b7f-1a503d3aab64');
-
-  // Initialize map service
-  MapService.instance.initializeController();
+    // Initialize map service
+    MapService.instance.initializeController();
+    print('All services initialized'); // Debug logging
+  } catch (e) {
+    print('Error initializing services: $e'); // Debug logging
+    rethrow;
+  }
 }
 
 class SafeHavenApp extends StatelessWidget {
@@ -62,7 +68,7 @@ class SafeHavenApp extends StatelessWidget {
           elevation: 0,
         ),
       ),
-      home: const HomeScreen(),
+      home: const AuthWrapper(),
       debugShowCheckedModeBanner: false,
     );
   }
