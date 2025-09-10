@@ -3,8 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/auth_provider.dart';
 import 'role_selection_screen.dart';
 import '../home_screen.dart';
-import '../supabase_test_screen.dart';
-import '../supabase_config_checker.dart';
+// import '../supabase_test_screen.dart';
+// import '../supabase_config_checker.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -171,7 +171,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
             colors: [
               theme.colorScheme.primary.withOpacity(0.1),
               theme.colorScheme.secondary.withOpacity(0.1),
-              Colors.white,
+              const Color.fromARGB(255, 5, 5, 5),
             ],
           ),
         ),
@@ -201,10 +201,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         const Spacer(flex: 1),
                         
                         // Debug Section (only in debug mode)
-                        if (const bool.fromEnvironment('dart.vm.product') == false)
-                          _buildDebugSection(),
+                        // if (const bool.fromEnvironment('dart.vm.product') == false)
+                        //   _buildDebugSection(),
                         
-                        const SizedBox(height: 20),
+                        // const SizedBox(height: 20),
                       ],
                     ),
                   ),
@@ -277,7 +277,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: const Color.fromARGB(255, 0, 0, 0),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -354,7 +354,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: !_isSignUpMode 
-                      ? Colors.white 
+                      ? const Color.fromARGB(255, 0, 0, 0) 
                       : theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
@@ -378,7 +378,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: _isSignUpMode 
-                      ? Colors.white 
+                      ? const Color.fromARGB(255, 0, 0, 0) 
                       : theme.colorScheme.onSurfaceVariant,
                     fontWeight: FontWeight.w600,
                   ),
@@ -575,13 +575,13 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 width: 20,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color.fromARGB(255, 0, 0, 0)),
                 ),
               )
             : Text(
                 _isSignUpMode ? 'Create Account' : 'Sign In',
                 style: const TextStyle(
-                  color: Colors.white,
+                  color: Color.fromARGB(255, 0, 0, 0),
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
                 ),
@@ -620,55 +620,55 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
     );
   }
 
-  Widget _buildDebugSection() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[100],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.grey[300]!),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            '🔧 Debug Tools (Development Only)',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.bug_report, size: 16),
-                  label: const Text('Basic Test', style: TextStyle(fontSize: 12)),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const SupabaseConnectionTest(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.settings, size: 16),
-                  label: const Text('Config Check', style: TextStyle(fontSize: 12)),
-                  onPressed: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const SupabaseConfigChecker(),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+  // Widget _buildDebugSection() {
+  //   return Container(
+  //     padding: const EdgeInsets.all(16),
+  //     decoration: BoxDecoration(
+  //       color: Colors.grey[100],
+  //       borderRadius: BorderRadius.circular(8),
+  //       border: Border.all(color: Colors.grey[300]!),
+  //     ),
+  //     child: Column(
+  //       crossAxisAlignment: CrossAxisAlignment.start,
+  //       children: [
+  //         const Text(
+  //           '🔧 Debug Tools (Development Only)',
+  //           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+  //         ),
+  //         const SizedBox(height: 8),
+  //         Row(
+  //           children: [
+  //             Expanded(
+  //               child: OutlinedButton.icon(
+  //                 icon: const Icon(Icons.bug_report, size: 16),
+  //                 label: const Text('Basic Test', style: TextStyle(fontSize: 12)),
+  //                 onPressed: () {
+  //                   Navigator.of(context).push(
+  //                     MaterialPageRoute(
+  //                       builder: (context) => const SupabaseConnectionTest(),
+  //                     ),
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //             const SizedBox(width: 8),
+  //             Expanded(
+  //               child: OutlinedButton.icon(
+  //                 icon: const Icon(Icons.settings, size: 16),
+  //                 label: const Text('Config Check', style: TextStyle(fontSize: 12)),
+  //                 onPressed: () {
+  //                   Navigator.of(context).push(
+  //                     MaterialPageRoute(
+  //                       builder: (context) => const SupabaseConfigChecker(),
+  //                     ),
+  //                   );
+  //                 },
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 }
