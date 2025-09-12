@@ -20,8 +20,8 @@ class _ProviderOnboardingScreenState extends ConsumerState<ProviderOnboardingScr
   final _skillsController = TextEditingController();
   
   File? _idImage;
-  List<String> _selectedCategories = [];
-  List<String> _skills = [];
+  final List<String> _selectedCategories = [];
+  final List<String> _skills = [];
   bool _isLoading = false;
   
   final ImagePicker _picker = ImagePicker();
@@ -377,7 +377,7 @@ class _ProviderOnboardingScreenState extends ConsumerState<ProviderOnboardingScr
             Container(
               height: 120,
               decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                color: theme.colorScheme.surfaceContainerHighest.withOpacity(0.3),
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
                   color: theme.colorScheme.outline.withOpacity(0.3),

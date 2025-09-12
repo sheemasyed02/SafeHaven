@@ -11,7 +11,7 @@ class DatabaseTestScreen extends ConsumerStatefulWidget {
 }
 
 class _DatabaseTestScreenState extends ConsumerState<DatabaseTestScreen> {
-  List<String> _logs = [];
+  final List<String> _logs = [];
   bool _isLoading = false;
 
   void _addLog(String message) {

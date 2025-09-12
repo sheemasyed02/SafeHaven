@@ -317,8 +317,8 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
             );
           },
           backgroundColor: Colors.orange,
-          child: const Icon(Icons.bug_report, color: Colors.white),
           tooltip: 'Database Test',
+          child: const Icon(Icons.bug_report, color: Colors.white),
         ),
       ),
     );
