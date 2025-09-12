@@ -29,22 +29,32 @@ class AuthState {
 
 class AuthNotifier extends StateNotifier<AuthState> {
   /// Update user role in Supabase users table
-  Future<void> updateUserRole(String role) async {
+  Future<void> updateUserRole(String role, {String? providerType}) async {
     final user = state.user;
     if (user == null) {
       throw Exception('No authenticated user found');
     }
     try {
+      final Map<String, dynamic> updates = {'role': role};
+      if (providerType != null) {
+        updates['provider_type'] = providerType;
+      }
+      
       final response = await _supabaseService.client
         .from('users')
-        .update({'role': role})
+        .update(updates)
         .eq('id', user.id)
         .select();
       if (response.isEmpty) {
         throw Exception('Failed to update role');
       }
-      // Update local state with new role
-      state = state.copyWith(user: user.copyWith(role: role));
+      // Update local state with new role and provider type
+      state = state.copyWith(
+        user: user.copyWith(
+          role: role,
+          providerType: providerType ?? user.providerType,
+        ),
+      );
     } catch (e) {
       print('UpdateUserRole Error: $e');
       throw Exception('Failed to update role: $e');
@@ -95,6 +105,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           lastName: userProfile?['last_name'],
           phoneNumber: userProfile?['phone_number'],
           role: userProfile?['role'],
+          providerType: userProfile?['provider_type'],
           createdAt: DateTime.parse(response.user!.createdAt),
         );
         state = state.copyWith(user: user, isLoading: false);
@@ -125,23 +136,35 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
 
       if (response.user != null) {
-        // Create user profile in users table without role
-        await _supabaseService.client
-          .from('users')
-          .upsert({
-            'id': response.user!.id,
-            'email': response.user!.email,
-            'created_at': response.user!.createdAt,
-            // Note: role is intentionally not set - will be set during role selection
-          });
+        // Check if email confirmation is required
+        final needsConfirmation = response.user!.emailConfirmedAt == null;
         
-        final user = User(
-          id: response.user!.id,
-          email: response.user!.email ?? '',
-          createdAt: DateTime.parse(response.user!.createdAt),
-          // role is null initially
-        );
-        state = state.copyWith(user: user, isLoading: false);
+        if (!needsConfirmation) {
+          // Email is already confirmed or confirmation is disabled
+          // Create user profile in users table without role
+          await _supabaseService.client
+            .from('users')
+            .upsert({
+              'id': response.user!.id,
+              'email': response.user!.email,
+              'created_at': response.user!.createdAt,
+              // Note: role is intentionally not set - will be set during role selection
+            });
+          
+          final user = User(
+            id: response.user!.id,
+            email: response.user!.email ?? '',
+            createdAt: DateTime.parse(response.user!.createdAt),
+            // role is null initially
+          );
+          state = state.copyWith(user: user, isLoading: false);
+        } else {
+          // Email confirmation is required
+          state = state.copyWith(
+            isLoading: false,
+            error: 'Please check your email and click the confirmation link to continue.',
+          );
+        }
       } else {
         state = state.copyWith(
           isLoading: false,

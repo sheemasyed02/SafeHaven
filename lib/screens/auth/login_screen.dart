@@ -82,20 +82,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         await ref.read(authProvider.notifier).signUp(email, password);
         // Check if signup was successful
         final authState = ref.read(authProvider);
+        print('After signup - User: ${authState.user?.id}, Role: ${authState.user?.role}');
+        
         if (authState.user != null && mounted) {
-          // Show success message for signup and navigate to role selection
-          _showSuccessDialog(
-            title: 'Account Created!',
-            message: 'Your account has been created successfully! You must now select your role to complete registration.',
-            actionLabel: 'Select Role',
-            onAction: () {
-              Navigator.of(context).pushReplacement(
-                MaterialPageRoute(
-                  builder: (context) => const RoleSelectionScreen(),
-                ),
-              );
-            },
+          // Navigate directly to role selection for new users
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const RoleSelectionScreen(),
+            ),
           );
+        } else {
+          // Show error if signup failed but no exception was thrown
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text('Signup completed but please check your email for verification before continuing.'),
+                backgroundColor: Colors.orange,
+                duration: Duration(seconds: 5),
+              ),
+            );
+          }
         }
       } else {
         await ref.read(authProvider.notifier).signIn(email, password);
@@ -124,46 +130,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
       // Error is already handled by the provider and shown in UI
       print('Auth error in UI: $e');
     }
-  }
-
-  void _showSuccessDialog({
-    required String title,
-    required String message,
-    required String actionLabel,
-    VoidCallback? onAction,
-  }) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: Row(
-          children: [
-            Icon(Icons.check_circle, color: Colors.green[600], size: 28),
-            const SizedBox(width: 12),
-            Text(title),
-          ],
-        ),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              if (onAction != null) {
-                onAction();
-              } else {
-                setState(() {
-                  _isSignUpMode = false; // Switch to login mode
-                  _emailController.clear();
-                  _passwordController.clear();
-                });
-              }
-            },
-            child: Text(actionLabel),
-          ),
-        ],
-      ),
-    );
   }
 
   @override

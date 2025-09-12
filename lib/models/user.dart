@@ -5,6 +5,7 @@ class User {
   final String? lastName;
   final String? phoneNumber;
   final String? role; // Added role field
+  final String? providerType; // Added provider type field
   final DateTime createdAt;
   final DateTime? updatedAt;
 
@@ -15,6 +16,7 @@ class User {
     this.lastName,
     this.phoneNumber,
     this.role,
+    this.providerType,
     required this.createdAt,
     this.updatedAt,
   });
@@ -28,6 +30,7 @@ class User {
       lastName: json['last_name'],
       phoneNumber: json['phone_number'],
       role: json['role'],
+      providerType: json['provider_type'],
       createdAt: DateTime.parse(json['created_at']),
       updatedAt: json['updated_at'] != null 
         ? DateTime.parse(json['updated_at']) 
@@ -44,6 +47,7 @@ class User {
       'last_name': lastName,
       'phone_number': phoneNumber,
       'role': role,
+      'provider_type': providerType,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
     };
@@ -69,6 +73,7 @@ class User {
     String? lastName,
     String? phoneNumber,
     String? role,
+    String? providerType,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -79,6 +84,7 @@ class User {
       lastName: lastName ?? this.lastName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       role: role ?? this.role,
+      providerType: providerType ?? this.providerType,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
