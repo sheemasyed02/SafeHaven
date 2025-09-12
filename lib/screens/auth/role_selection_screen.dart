@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../services/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../home_screen.dart';
+import '../provider/onboarding_screen.dart';
 
 enum UserRole {
   helpSeeker('Help Seeker', 'I need assistance and support', Icons.help_outline),
@@ -39,12 +40,24 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
         : _selectedRole == UserRole.volunteer ? 'provider'
         : 'provider';
       await ref.read(authProvider.notifier).updateUserRole(roleValue);
+      
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const HomeScreen(),
-          ),
-        );
+        // Navigate based on role
+        if (roleValue == 'provider') {
+          // Providers need to complete onboarding
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const ProviderOnboardingScreen(),
+            ),
+          );
+        } else {
+          // Customers go directly to home
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (context) => const HomeScreen(),
+            ),
+          );
+        }
       }
     } catch (e) {
       if (mounted) {
