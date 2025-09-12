@@ -4,6 +4,7 @@ import '../../services/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../home_screen.dart';
 import '../provider/onboarding_screen.dart';
+import '../database_test_screen.dart';
 
 enum UserRole {
   customer('Customer', 'I need assistance and support', Icons.help_outline),
@@ -78,26 +79,48 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   Future<void> _continueWithRole() async {
     if (!_canContinue) return;
 
+    print('Starting role update process...'); // Debug
+    print('Selected role: $_selectedRole'); // Debug
+    print('Selected provider type: $_selectedProviderType'); // Debug
+
     setState(() {
       _isLoading = true;
     });
 
     try {
       final roleValue = _selectedRole == UserRole.customer ? 'customer' : 'provider';
+      print('Role value: $roleValue'); // Debug
       
       // Update role in database
       if (_selectedRole == UserRole.provider && _selectedProviderType != null) {
+        print('Updating provider role with type'); // Debug
         await ref.read(authProvider.notifier).updateUserRole(
           roleValue, 
           providerType: _selectedProviderType!.title.toLowerCase(),
         );
       } else {
+        print('Updating customer role'); // Debug
         await ref.read(authProvider.notifier).updateUserRole(roleValue);
       }
       
+      print('Role update completed successfully'); // Debug
+      
       if (mounted) {
+        // Show success message first
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Role set successfully as $roleValue'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+        
+        // Small delay to show the success message
+        await Future.delayed(const Duration(seconds: 1));
+        
         // Navigate based on role
         if (roleValue == 'provider') {
+          print('Navigating to provider onboarding'); // Debug
           // Providers need to complete onboarding
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
@@ -105,6 +128,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
             ),
           );
         } else {
+          print('Navigating to home screen'); // Debug
           // Customers go directly to home
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
@@ -114,9 +138,44 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
         }
       }
     } catch (e) {
+      print('❌ Error in _continueWithRole: $e'); // Debug
       if (mounted) {
+        String errorMessage = 'Failed to set role';
+        String actionLabel = 'Debug';
+        
+        // Provide specific error messages
+        if (e.toString().contains('column') && e.toString().contains('does not exist')) {
+          errorMessage = 'Database setup issue. Please check DATABASE_DIAGNOSTIC.md in your project folder for setup instructions.';
+        } else if (e.toString().contains('42501') || e.toString().contains('row-level security') || e.toString().contains('Row Level Security')) {
+          errorMessage = 'Database permission issue (RLS Policy). Check RLS_POLICY_FIX.md for the complete solution.';
+          actionLabel = 'Fix RLS';
+        } else if (e.toString().contains('permission')) {
+          errorMessage = 'Database permission issue. Please check your Supabase policies in RLS_POLICY_FIX.md.';
+          actionLabel = 'Fix RLS';
+        } else if (e.toString().contains('No authenticated user')) {
+          errorMessage = 'Authentication error. Please log in again.';
+        } else {
+          errorMessage = 'Failed to set role: ${e.toString()}';
+        }
+        
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to set role: ${e.toString()}'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+            action: SnackBarAction(
+              label: actionLabel,
+              textColor: Colors.white,
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DatabaseTestScreen(),
+                  ),
+                );
+              },
+            ),
+          ),
         );
       }
     } finally {
@@ -247,6 +306,19 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               ],
             ),
           ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const DatabaseTestScreen(),
+              ),
+            );
+          },
+          backgroundColor: Colors.orange,
+          child: const Icon(Icons.bug_report, color: Colors.white),
+          tooltip: 'Database Test',
         ),
       ),
     );

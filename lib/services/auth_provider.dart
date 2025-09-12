@@ -28,38 +28,6 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
-  /// Update user role in Supabase users table
-  Future<void> updateUserRole(String role, {String? providerType}) async {
-    final user = state.user;
-    if (user == null) {
-      throw Exception('No authenticated user found');
-    }
-    try {
-      final Map<String, dynamic> updates = {'role': role};
-      if (providerType != null) {
-        updates['provider_type'] = providerType;
-      }
-      
-      final response = await _supabaseService.client
-        .from('users')
-        .update(updates)
-        .eq('id', user.id)
-        .select();
-      if (response.isEmpty) {
-        throw Exception('Failed to update role');
-      }
-      // Update local state with new role and provider type
-      state = state.copyWith(
-        user: user.copyWith(
-          role: role,
-          providerType: providerType ?? user.providerType,
-        ),
-      );
-    } catch (e) {
-      print('UpdateUserRole Error: $e');
-      throw Exception('Failed to update role: $e');
-    }
-  }
   AuthNotifier() : super(const AuthState()) {
     _checkAuthStatus();
   }
@@ -147,6 +115,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
             .upsert({
               'id': response.user!.id,
               'email': response.user!.email,
+              'name': response.user!.email?.split('@')[0] ?? 'User', // Use email prefix as default name
               'created_at': response.user!.createdAt,
               // Note: role is intentionally not set - will be set during role selection
             });
@@ -154,6 +123,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
           final user = User(
             id: response.user!.id,
             email: response.user!.email ?? '',
+            name: response.user!.email?.split('@')[0] ?? 'User',
             createdAt: DateTime.parse(response.user!.createdAt),
             // role is null initially
           );
@@ -199,6 +169,97 @@ class AuthNotifier extends StateNotifier<AuthState> {
   /// Clear error
   void clearError() {
     state = state.copyWith(clearError: true);
+  }
+
+  /// Update user role in Supabase users table
+  Future<void> updateUserRole(String role, {String? providerType}) async {
+    final user = state.user;
+    if (user == null) {
+      throw Exception('No authenticated user found');
+    }
+    try {
+      print('🔄 Starting role update: role=$role, providerType=$providerType'); // Debug
+      
+      // First, check if user exists in users table
+      final existingUser = await _supabaseService.client
+        .from('users')
+        .select('*')
+        .eq('id', user.id)
+        .maybeSingle();
+      
+      print('📊 Existing user data: $existingUser'); // Debug
+      
+      // Prepare update data
+      final Map<String, dynamic> updates = {
+        'role': role,
+      };
+      
+      if (providerType != null) {
+        updates['provider_type'] = providerType;
+      }
+      
+      print('📝 Update data: $updates'); // Debug
+      
+      // If user doesn't exist, create them first
+      if (existingUser == null) {
+        print('👤 Creating new user record...'); // Debug
+        final createData = {
+          'id': user.id,
+          'email': user.email,
+          'name': user.email.split('@')[0], // Use email prefix as default name
+          'created_at': DateTime.now().toIso8601String(),
+          ...updates,
+        };
+        
+        final createResponse = await _supabaseService.client
+          .from('users')
+          .insert(createData)
+          .select();
+          
+        print('✅ User created: $createResponse'); // Debug
+      } else {
+        // Update existing user
+        print('🔄 Updating existing user...'); // Debug
+        final updateResponse = await _supabaseService.client
+          .from('users')
+          .update(updates)
+          .eq('id', user.id)
+          .select();
+          
+        print('✅ User updated: $updateResponse'); // Debug
+        
+        if (updateResponse.isEmpty) {
+          throw Exception('Update failed - no rows affected');
+        }
+      }
+      
+      // Update local state with new role and provider type
+      state = state.copyWith(
+        user: user.copyWith(
+          role: role,
+          providerType: providerType ?? user.providerType,
+        ),
+      );
+      
+      print('🎉 Role updated successfully in local state'); // Debug
+    } catch (e) {
+      print('❌ UpdateUserRole Error: $e');
+      print('📍 Stack trace: ${StackTrace.current}');
+      
+      // Provide more specific error messages
+      String errorMessage = 'Failed to update role';
+      if (e.toString().contains('column') && e.toString().contains('does not exist')) {
+        errorMessage = 'Database column missing. Please check DATABASE_DIAGNOSTIC.md for setup instructions.';
+      } else if (e.toString().contains('42501') || e.toString().contains('row-level security')) {
+        errorMessage = 'Database permission denied. This is a Row Level Security (RLS) policy issue. Please check RLS_POLICY_FIX.md for the complete solution.';
+      } else if (e.toString().contains('permission')) {
+        errorMessage = 'Permission denied. Please check database policies in RLS_POLICY_FIX.md.';
+      } else {
+        errorMessage = 'Failed to update role: ${e.toString()}';
+      }
+      
+      throw Exception(errorMessage);
+    }
   }
 }
 
