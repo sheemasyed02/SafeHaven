@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../services/auth_provider.dart';
 import '../../widgets/custom_button.dart';
 import '../home_screen.dart';
 
@@ -34,12 +35,10 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
     });
 
     try {
-      // TODO: Save user role to Supabase user profile
-      // await ref.read(authProvider.notifier).updateUserRole(_selectedRole!);
-      
-      // For now, just navigate to home screen
-      await Future.delayed(const Duration(milliseconds: 500)); // Simulate API call
-      
+      final roleValue = _selectedRole == UserRole.helpSeeker ? 'customer'
+        : _selectedRole == UserRole.volunteer ? 'provider'
+        : 'provider';
+      await ref.read(authProvider.notifier).updateUserRole(roleValue);
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(
@@ -50,10 +49,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to set role: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          SnackBar(content: Text('Failed to set role: ${e.toString()}'), backgroundColor: Colors.red),
         );
       }
     } finally {
@@ -69,7 +65,18 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Scaffold(
+    return WillPopScope(
+      onWillPop: () async {
+        // Prevent back navigation - role selection is mandatory
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Please complete role selection to continue'),
+            backgroundColor: theme.colorScheme.primary,
+          ),
+        );
+        return false;
+      },
+      child: Scaffold(
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -80,7 +87,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               
               // Header
               Text(
-                'Choose Your Role',
+                'Complete Your Registration',
                 style: theme.textTheme.headlineLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.primary,
@@ -89,7 +96,7 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               ),
               const SizedBox(height: 12),
               Text(
-                'Select how you want to use SafeHaven',
+                'Please select your role to complete the registration process. This step is required to continue.',
                 style: theme.textTheme.bodyLarge?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
@@ -186,31 +193,46 @@ class _RoleSelectionScreenState extends ConsumerState<RoleSelectionScreen> {
               // Continue button
               const SizedBox(height: 24),
               CustomButton(
-                text: _isLoading ? 'Setting up...' : 'Continue',
+                text: _isLoading ? 'Setting up...' : 'Complete Registration',
                 onPressed: (_selectedRole == null || _isLoading) ? () {} : _continueWithRole,
                 backgroundColor: theme.colorScheme.primary,
               ),
-              const SizedBox(height: 16),
               
-              // Skip for now button
-              TextButton(
-                onPressed: _isLoading ? null : () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (context) => const HomeScreen(),
-                    ),
-                  );
-                },
-                child: Text(
-                  'Skip for now',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant,
+              // Info text
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withOpacity(0.3),
                   ),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline,
+                      color: theme.colorScheme.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Role selection is required to access SafeHaven features',
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
         ),
+      ),
       ),
     );
   }

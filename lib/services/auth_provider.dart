@@ -28,6 +28,28 @@ class AuthState {
 }
 
 class AuthNotifier extends StateNotifier<AuthState> {
+  /// Update user role in Supabase users table
+  Future<void> updateUserRole(String role) async {
+    final user = state.user;
+    if (user == null) {
+      throw Exception('No authenticated user found');
+    }
+    try {
+      final response = await _supabaseService.client
+        .from('users')
+        .update({'role': role})
+        .eq('id', user.id)
+        .select();
+      if (response.isEmpty) {
+        throw Exception('Failed to update role');
+      }
+      // Update local state with new role
+      state = state.copyWith(user: user.copyWith(role: role));
+    } catch (e) {
+      print('UpdateUserRole Error: $e');
+      throw Exception('Failed to update role: $e');
+    }
+  }
   AuthNotifier() : super(const AuthState()) {
     _checkAuthStatus();
   }
@@ -59,9 +81,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
 
       if (response.user != null) {
+        // Fetch user profile with role from users table
+        final userProfile = await _supabaseService.client
+          .from('users')
+          .select('*')
+          .eq('id', response.user!.id)
+          .maybeSingle();
+        
         final user = User(
           id: response.user!.id,
           email: response.user!.email ?? '',
+          firstName: userProfile?['first_name'],
+          lastName: userProfile?['last_name'],
+          phoneNumber: userProfile?['phone_number'],
+          role: userProfile?['role'],
           createdAt: DateTime.parse(response.user!.createdAt),
         );
         state = state.copyWith(user: user, isLoading: false);
@@ -92,10 +125,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
       );
 
       if (response.user != null) {
+        // Create user profile in users table without role
+        await _supabaseService.client
+          .from('users')
+          .upsert({
+            'id': response.user!.id,
+            'email': response.user!.email,
+            'created_at': response.user!.createdAt,
+            // Note: role is intentionally not set - will be set during role selection
+          });
+        
         final user = User(
           id: response.user!.id,
           email: response.user!.email ?? '',
           createdAt: DateTime.parse(response.user!.createdAt),
+          // role is null initially
         );
         state = state.copyWith(user: user, isLoading: false);
       } else {

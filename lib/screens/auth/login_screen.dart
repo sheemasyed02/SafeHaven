@@ -86,8 +86,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           // Show success message for signup and navigate to role selection
           _showSuccessDialog(
             title: 'Account Created!',
-            message: 'Your account has been created successfully! Please select your role to continue.',
-            actionLabel: 'Continue',
+            message: 'Your account has been created successfully! You must now select your role to complete registration.',
+            actionLabel: 'Select Role',
             onAction: () {
               Navigator.of(context).pushReplacement(
                 MaterialPageRoute(
@@ -102,12 +102,22 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         // Check if signin was successful
         final authState = ref.read(authProvider);
         if (authState.user != null && mounted) {
-          // Navigate to home for existing users
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(
-              builder: (context) => const HomeScreen(),
-            ),
-          );
+          // Check if user has a role assigned
+          if (authState.user!.role == null || authState.user!.role!.isEmpty) {
+            // User exists but no role assigned - redirect to role selection
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const RoleSelectionScreen(),
+              ),
+            );
+          } else {
+            // User has a role - navigate to home
+            Navigator.of(context).pushReplacement(
+              MaterialPageRoute(
+                builder: (context) => const HomeScreen(),
+              ),
+            );
+          }
         }
       }
     } catch (e) {
