@@ -78,11 +78,13 @@ class SupabaseService {
   }) async {
     final now = DateTime.now().toIso8601String();
     
-    await _client.from('profiles').insert({
+    await _client.from('user_profiles').insert({
       'id': userId,
       'name': name,
       'email': email,
       'role': role.value,
+      'current_mode': role.value, // Set currentMode to the selected role
+      'can_switch_roles': true, // Enable role switching by default
       'phone': phone,
       'created_at': now,
       'updated_at': now,
@@ -93,7 +95,7 @@ class SupabaseService {
   Future<UserProfile?> getUserProfile(String userId) async {
     try {
       final response = await _client
-          .from('profiles')
+          .from('user_profiles')
           .select()
           .eq('id', userId)
           .single();
@@ -128,7 +130,7 @@ class SupabaseService {
     if (avatarUrl != null) updates['avatar_url'] = avatarUrl;
 
     await _client
-        .from('profiles')
+        .from('user_profiles')
         .update(updates)
         .eq('id', userId);
   }

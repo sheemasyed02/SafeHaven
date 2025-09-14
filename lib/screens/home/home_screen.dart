@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../services/auth_service.dart';
-import '../../services/supabase_service.dart';
-import '../../models/user_profile.dart';
+import '../../providers/auth_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -13,116 +11,57 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
-  int _selectedIndex = 0;
-
-  final List<_NavigationItem> _navigationItems = [
-    _NavigationItem(
-      icon: Icons.home_outlined,
-      selectedIcon: Icons.home,
-      label: 'Home',
-    ),
-    _NavigationItem(
-      icon: Icons.search_outlined,
-      selectedIcon: Icons.search,
-      label: 'Browse',
-    ),
-    _NavigationItem(
-      icon: Icons.work_outline,
-      selectedIcon: Icons.work,
-      label: 'Services',
-    ),
-    _NavigationItem(
-      icon: Icons.person_outlined,
-      selectedIcon: Icons.person,
-      label: 'Profile',
-    ),
-  ];
+  int _currentIndex = 0;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final user = ref.watch(authServiceProvider).currentUser;
+    final authState = ref.watch(authStateProvider);
+    final user = authState.user;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'SafeHaven',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.onSurface,
-          ),
-        ),
+        title: const Text('SafeHaven'),
+        backgroundColor: theme.colorScheme.surfaceContainer,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {
-              // TODO: Navigate to notifications
-            },
-          ),
-          PopupMenuButton<String>(
-            icon: CircleAvatar(
-              backgroundColor: theme.colorScheme.primaryContainer,
-              child: Icon(
-                Icons.person,
-                color: theme.colorScheme.onPrimaryContainer,
-              ),
+          if (user != null) ...[
+            IconButton(
+              icon: const Icon(Icons.person),
+              onPressed: () => context.go('/profile'),
             ),
-            onSelected: (value) {
-              switch (value) {
-                case 'profile':
-                  context.go('/profile');
-                  break;
-                case 'settings':
-                  setState(() {
-                    _selectedIndex = 4;
-                  });
-                  break;
-                case 'logout':
-                  _showLogoutDialog();
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              PopupMenuItem(
-                value: 'profile',
-                child: Row(
-                  children: [
-                    const Icon(Icons.person_outlined),
-                    const SizedBox(width: 12),
-                    Text('Profile'),
-                  ],
+            PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'logout') {
+                  ref.read(authStateProvider.notifier).signOut();
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'logout',
+                  child: Row(
+                    children: [
+                      Icon(Icons.logout),
+                      SizedBox(width: 8),
+                      Text('Logout'),
+                    ],
+                  ),
                 ),
-              ),
-              PopupMenuItem(
-                value: 'settings',
-                child: Row(
-                  children: [
-                    const Icon(Icons.settings_outlined),
-                    const SizedBox(width: 12),
-                    Text('Settings'),
-                  ],
-                ),
-              ),
-              const PopupMenuDivider(),
-              PopupMenuItem(
-                value: 'logout',
-                child: Row(
-                  children: [
-                    Icon(Icons.logout, color: theme.colorScheme.error),
-                    const SizedBox(width: 12),
-                    Text(
-                      'Logout',
-                      style: TextStyle(color: theme.colorScheme.error),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ] else ...[
+            TextButton(
+              onPressed: () => context.go('/login'),
+              child: const Text('Login'),
+            ),
+            TextButton(
+              onPressed: () => context.go('/register'),
+              child: const Text('Sign Up'),
+            ),
+          ],
         ],
       ),
       body: IndexedStack(
-        index: _selectedIndex,
+        index: _currentIndex,
         children: [
           _HomeTab(user: user),
           _BrowseTab(),
@@ -130,72 +69,35 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           _ProfileTab(user: user),
         ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (index) {
+      bottomNavigationBar: BottomNavigationBar(
+        type: BottomNavigationBarType.fixed,
+        currentIndex: _currentIndex,
+        onTap: (index) {
           setState(() {
-            _selectedIndex = index;
+            _currentIndex = index;
           });
         },
-        destinations: _navigationItems
-            .map((item) => NavigationDestination(
-                  icon: Icon(item.icon),
-                  selectedIcon: Icon(item.selectedIcon),
-                  label: item.label,
-                ))
-            .toList(),
-      ),
-    );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
           ),
-          FilledButton(
-            onPressed: () async {
-              Navigator.of(context).pop();
-              try {
-                await ref.read(authServiceProvider).signOut();
-                if (mounted) {
-                  context.go('/splash');
-                }
-              } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Logout failed: ${e.toString()}'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              }
-            },
-            child: const Text('Logout'),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Browse',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.work),
+            label: 'Services',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),
     );
   }
-}
-
-class _NavigationItem {
-  final IconData icon;
-  final IconData selectedIcon;
-  final String label;
-
-  _NavigationItem({
-    required this.icon,
-    required this.selectedIcon,
-    required this.label,
-  });
 }
 
 class _HomeTab extends StatelessWidget {
@@ -208,308 +110,169 @@ class _HomeTab extends StatelessWidget {
     final theme = Theme.of(context);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Welcome Card
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Welcome back!',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    user?.email ?? 'User',
-                    style: theme.textTheme.bodyLarge?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.shield,
-                        color: theme.colorScheme.primary,
-                        size: 20,
+          const SizedBox(height: 40),
+          
+          // Welcome Section
+          Icon(
+            Icons.home_work,
+            size: 80,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(height: 24),
+          
+          Text(
+            'Welcome to SafeHaven',
+            style: theme.textTheme.headlineLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: theme.colorScheme.primary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          
+          const SizedBox(height: 16),
+          
+          Text(
+            'Your trusted marketplace for local services',
+            style: theme.textTheme.titleMedium?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          
+          const SizedBox(height: 40),
+          
+          if (user == null) ...[
+            // Not logged in - show signup prompts
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Get Started',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'You are protected',
-                        style: TextStyle(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    Text(
+                      'Join SafeHaven to connect with trusted local service providers or offer your own services.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () => context.go('/login'),
+                            child: const Text('Login'),
+                          ),
                         ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () => context.go('/register'),
+                            child: const Text('Sign Up'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ] else ...[
+            // Logged in - show profile completion prompt
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Complete Your Profile',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
-                    ],
-                  ),
-                ],
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    Text(
+                      'Complete your profile setup to access your personalized dashboard and start using SafeHaven services.',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton.icon(
+                        onPressed: () => context.go('/profile'),
+                        icon: const Icon(Icons.person_add),
+                        label: const Text('Complete Profile'),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ),
-
-          const SizedBox(height: 24),
-
-          // Services Platform
+          ],
+          
+          const SizedBox(height: 32),
+          
+          // What SafeHaven Offers
           Text(
-            'Services Platform',
+            'What SafeHaven Offers',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: _ServiceCard(
-                  icon: Icons.person_outline,
-                  title: 'Customer Dashboard',
-                  subtitle: 'Browse & book services',
-                  color: theme.colorScheme.primary,
-                  onTap: () {
-                    context.go('/customer-dashboard');
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ServiceCard(
-                  icon: Icons.work_outline,
-                  title: 'Provider Dashboard',
-                  subtitle: 'Offer your services',
-                  color: theme.colorScheme.secondary,
-                  onTap: () {
-                    context.go('/provider-dashboard');
-                  },
-                ),
-              ),
-            ],
+          
+          const SizedBox(height: 20),
+          
+          const _FeatureCard(
+            icon: Icons.search,
+            title: 'Find Services',
+            description: 'Browse and book trusted local service providers',
+            color: Colors.blue,
           ),
-
-          const SizedBox(height: 24),
-
-          // Quick Actions
-          Text(
-            'Quick Actions',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-
-          Row(
-            children: [
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.emergency,
-                  title: 'Emergency',
-                  subtitle: 'Get help now',
-                  color: theme.colorScheme.error,
-                  onTap: () {
-                    // TODO: Emergency action
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.location_on,
-                  title: 'Share Location',
-                  subtitle: 'With contacts',
-                  color: theme.colorScheme.primary,
-                  onTap: () {
-                    // TODO: Share location
-                  },
-                ),
-              ),
-            ],
-          ),
-
+          
           const SizedBox(height: 12),
-
-          Row(
-            children: [
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.phone,
-                  title: 'Call Emergency',
-                  subtitle: 'Quick dial',
-                  color: theme.colorScheme.tertiary,
-                  onTap: () {
-                    // TODO: Call emergency
-                  },
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _ActionCard(
-                  icon: Icons.camera_alt,
-                  title: 'Evidence',
-                  subtitle: 'Record proof',
-                  color: theme.colorScheme.secondary,
-                  onTap: () {
-                    // TODO: Record evidence
-                  },
-                ),
-              ),
-            ],
+          
+          const _FeatureCard(
+            icon: Icons.work,
+            title: 'Offer Services',
+            description: 'Become a provider and grow your business',
+            color: Colors.green,
           ),
-
-          const SizedBox(height: 24),
-
-          // Status Section
-          Text(
-            'Safety Status',
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+          
+          const SizedBox(height: 12),
+          
+          const _FeatureCard(
+            icon: Icons.security,
+            title: 'Secure Payments',
+            description: 'Protected escrow system for all transactions',
+            color: Colors.orange,
           ),
-          const SizedBox(height: 16),
-
-          Card(
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  _StatusItem(
-                    icon: Icons.location_on,
-                    title: 'Location Sharing',
-                    status: 'Active',
-                    isActive: true,
-                  ),
-                  const Divider(),
-                  _StatusItem(
-                    icon: Icons.contacts,
-                    title: 'Emergency Contacts',
-                    status: '3 contacts',
-                    isActive: true,
-                  ),
-                  const Divider(),
-                  _StatusItem(
-                    icon: Icons.notifications,
-                    title: 'Notifications',
-                    status: 'Enabled',
-                    isActive: true,
-                  ),
-                ],
-              ),
-            ),
+          
+          const SizedBox(height: 12),
+          
+          const _FeatureCard(
+            icon: Icons.star,
+            title: 'Reviews & Ratings',
+            description: 'Transparent feedback system for quality assurance',
+            color: Colors.purple,
           ),
         ],
       ),
-    );
-  }
-}
-
-class _ActionCard extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final Color color;
-  final VoidCallback onTap;
-
-  const _ActionCard({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.color,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _StatusItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String status;
-  final bool isActive;
-
-  const _StatusItem({
-    required this.icon,
-    required this.title,
-    required this.status,
-    required this.isActive,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      children: [
-        Icon(
-          icon,
-          color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-        ),
-        Text(
-          status,
-          style: TextStyle(
-            color: isActive ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
     );
   }
 }
@@ -572,70 +335,62 @@ class _ProfileTab extends StatelessWidget {
   }
 }
 
-
-
-class _ServiceCard extends StatelessWidget {
+class _FeatureCard extends StatelessWidget {
   final IconData icon;
   final String title;
-  final String subtitle;
+  final String description;
   final Color color;
-  final VoidCallback onTap;
 
-  const _ServiceCard({
+  const _FeatureCard({
     required this.icon,
     required this.title,
-    required this.subtitle,
+    required this.description,
     required this.color,
-    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  icon,
-                  color: color,
-                  size: 24,
-                ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
               ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+              child: Icon(
+                icon,
+                color: color,
+                size: 24,
               ),
-              const SizedBox(height: 4),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  fontSize: 12,
-                ),
-                textAlign: TextAlign.center,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

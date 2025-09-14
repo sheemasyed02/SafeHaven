@@ -194,7 +194,7 @@ class UserProfile {
       // Dual role fields
       currentMode: json['current_mode'] != null 
           ? UserRole.fromString(json['current_mode'] as String)
-          : null,
+          : UserRole.fromString(json['role'] as String), // Default to user's role
       canSwitchRoles: (json['can_switch_roles'] as bool?) ?? true,
     );
   }
