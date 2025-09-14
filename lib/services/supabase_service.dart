@@ -135,6 +135,53 @@ class SupabaseService {
         .eq('id', userId);
   }
 
+  /// Get all providers
+  Future<List<UserProfile>> getProviders() async {
+    try {
+      final response = await _client
+          .from('user_profiles')
+          .select()
+          .eq('role', 'provider')
+          .order('created_at', ascending: false);
+
+      return response.map<UserProfile>((data) => UserProfile.fromJson(data)).toList();
+    } catch (e) {
+      print('Error fetching providers: $e');
+      return [];
+    }
+  }
+
+  /// Search providers by name or services
+  Future<List<UserProfile>> searchProviders({
+    String? searchQuery,
+    List<String>? serviceCategories,
+  }) async {
+    try {
+      var query = _client
+          .from('user_profiles')
+          .select()
+          .eq('role', 'provider');
+
+      // Add text search if provided
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        query = query.or('name.ilike.%$searchQuery%,bio.ilike.%$searchQuery%');
+      }
+
+      // Add service category filter if provided
+      if (serviceCategories != null && serviceCategories.isNotEmpty) {
+        // Using overlap operator to check if any of the services match
+        query = query.overlaps('services', serviceCategories);
+      }
+
+      final response = await query.order('created_at', ascending: false);
+
+      return response.map<UserProfile>((data) => UserProfile.fromJson(data)).toList();
+    } catch (e) {
+      print('Error searching providers: $e');
+      return [];
+    }
+  }
+
   /// Sign out
   Future<void> signOut() async {
     await _client.auth.signOut();
