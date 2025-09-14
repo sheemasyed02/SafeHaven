@@ -17,10 +17,7 @@ void main() async {
 
     // Initialize Supabase service
     SupabaseService.initialize();
-    
-    print('Supabase initialized successfully');
   } catch (e) {
-    print('Error initializing Supabase: $e');
     // Continue anyway - we'll handle this in the app
   }
 
@@ -34,50 +31,15 @@ class SafeHavenApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    try {
-      final router = ref.watch(routerProvider);
+    final router = ref.watch(routerProvider);
 
-      return MaterialApp.router(
-        title: 'SafeHaven',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme,
-        darkTheme: AppTheme.darkTheme,
-        themeMode: ThemeMode.system,
-        routerConfig: router,
-      );
-    } catch (e) {
-      print('Error building app: $e');
-      // Fallback UI
-      return MaterialApp(
-        title: 'SafeHaven',
-        theme: AppTheme.lightTheme,
-        home: Scaffold(
-          appBar: AppBar(title: const Text('SafeHaven')),
-          body: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Icons.error, size: 64, color: Colors.red),
-                const SizedBox(height: 16),
-                const Text('App initialization failed'),
-                const SizedBox(height: 8),
-                Text('Error: $e'),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    // Try to restart the app
-                    Navigator.of(context).pushNamedAndRemoveUntil(
-                      '/',
-                      (route) => false,
-                    );
-                  },
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
+    return MaterialApp.router(
+      title: 'SafeHaven',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
+      routerConfig: router,
+    );
   }
 }

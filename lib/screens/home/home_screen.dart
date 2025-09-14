@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/auth_service.dart';
+import '../../services/supabase_service.dart';
+import '../../models/user_profile.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -257,6 +259,45 @@ class _HomeTab extends StatelessWidget {
                 ],
               ),
             ),
+          ),
+
+          const SizedBox(height: 24),
+
+          // Services Platform
+          Text(
+            'Services Platform',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: _ServiceCard(
+                  icon: Icons.person_outline,
+                  title: 'Customer Dashboard',
+                  subtitle: 'Browse & book services',
+                  color: theme.colorScheme.primary,
+                  onTap: () {
+                    context.go('/customer-dashboard');
+                  },
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: _ServiceCard(
+                  icon: Icons.work_outline,
+                  title: 'Provider Dashboard',
+                  subtitle: 'Offer your services',
+                  color: theme.colorScheme.secondary,
+                  onTap: () {
+                    context.go('/provider-dashboard');
+                  },
+                ),
+              ),
+            ],
           ),
 
           const SizedBox(height: 24),
@@ -543,6 +584,74 @@ class _SettingsTab extends StatelessWidget {
           Text('Settings Tab', style: TextStyle(fontSize: 24)),
           Text('App settings and preferences will be implemented here'),
         ],
+      ),
+    );
+  }
+}
+
+class _ServiceCard extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _ServiceCard({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

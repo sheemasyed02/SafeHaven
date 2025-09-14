@@ -26,24 +26,27 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isLoginRoute = state.matchedLocation == '/login';
       final isRegisterRoute = state.matchedLocation == '/register';
       final isSplashRoute = state.matchedLocation == '/';
+      final isHomeRoute = state.matchedLocation == '/home';
 
       // If not authenticated and trying to access protected route
-      if (user == null && !isLoginRoute && !isRegisterRoute && !isSplashRoute) {
+      if (user == null && !isLoginRoute && !isRegisterRoute && !isSplashRoute && !isHomeRoute) {
         return '/login';
       }
 
-      // If authenticated and on auth routes, redirect to appropriate dashboard
-      if (user != null && (isLoginRoute || isRegisterRoute)) {
+      // If authenticated and on auth/splash routes, redirect to appropriate dashboard
+      if (user != null && (isLoginRoute || isRegisterRoute || isSplashRoute)) {
         try {
           final profile = await SupabaseService.instance.getCurrentUserProfile();
           if (profile != null) {
-            switch (profile.role) {
+            // Use current mode for routing
+            switch (profile.currentMode) {
               case UserRole.customer:
                 return '/customer-dashboard';
               case UserRole.provider:
                 return '/provider-dashboard';
             }
           }
+          // If no profile or error, go to home to let user set up profile
           return '/home';
         } catch (e) {
           // If profile fetch fails, go to home
@@ -235,10 +238,10 @@ class RoleGuard extends ConsumerWidget {
           );
         }
 
-        if (profile.role != allowedRole) {
+        if (profile.currentMode != allowedRole) {
           // Wrong role, redirect to appropriate dashboard
           WidgetsBinding.instance.addPostFrameCallback((_) {
-            switch (profile.role) {
+            switch (profile.currentMode) {
               case UserRole.customer:
                 context.go('/customer-dashboard');
                 break;

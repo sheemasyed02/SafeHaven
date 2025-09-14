@@ -100,7 +100,6 @@ class SupabaseService {
 
       return UserProfile.fromJson(response);
     } catch (e) {
-      print('Error getting user profile: $e');
       return null;
     }
   }

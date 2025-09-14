@@ -15,7 +15,6 @@ final currentUserProfileProvider = FutureProvider<UserProfile?>((ref) async {
   try {
     return await SupabaseService.instance.getCurrentUserProfile();
   } catch (e) {
-    print('Error loading user profile: $e');
     return null;
   }
 });
