@@ -9,7 +9,7 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/user/profile_screen.dart';
-import '../screens/customer/service_browse_screen.dart';
+import '../screens/customer/customer_dashboard.dart';
 import '../screens/provider/provider_dashboard.dart';
 import '../screens/provider/provider_registration_screen.dart';
 import '../screens/customer/customer_browse_screen.dart';
@@ -82,7 +82,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'customer-dashboard',
         builder: (context, state) => const RoleGuard(
           allowedRole: UserRole.customer,
-          child: ServiceBrowseScreen(),
+          child: CustomerDashboard(),
         ),
       ),
       GoRoute(

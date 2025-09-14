@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../models/user_profile.dart';
 import '../../services/supabase_service.dart';
 import '../../widgets/provider_card.dart';
+import '../../providers/auth_provider.dart';
 
-class ServiceBrowseScreen extends StatefulWidget {
+class ServiceBrowseScreen extends ConsumerStatefulWidget {
   const ServiceBrowseScreen({super.key});
 
   @override
-  State<ServiceBrowseScreen> createState() => _ServiceBrowseScreenState();
+  ConsumerState<ServiceBrowseScreen> createState() => _ServiceBrowseScreenState();
 }
 
-class _ServiceBrowseScreenState extends State<ServiceBrowseScreen> {
+class _ServiceBrowseScreenState extends ConsumerState<ServiceBrowseScreen> {
   final TextEditingController _searchController = TextEditingController();
   List<UserProfile> _providers = [];
   List<UserProfile> _filteredProviders = [];
@@ -278,6 +281,8 @@ class _ServiceBrowseScreenState extends State<ServiceBrowseScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final userProfileAsync = ref.watch(currentUserProfileProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Browse Services'),
@@ -288,6 +293,46 @@ class _ServiceBrowseScreenState extends State<ServiceBrowseScreen> {
             icon: const Icon(Icons.refresh),
             onPressed: _loadProviders,
             tooltip: 'Refresh',
+          ),
+          // Role switch menu
+          userProfileAsync.when(
+            data: (userProfile) => userProfile?.canSwitchRoles == true
+                ? PopupMenuButton<String>(
+                    icon: const Icon(Icons.swap_horiz),
+                    tooltip: 'Switch Role',
+                    onSelected: (value) {
+                      switch (value) {
+                        case 'switch_to_provider':
+                          context.go('/provider-dashboard');
+                          break;
+                        case 'logout':
+                          ref.read(authStateProvider.notifier).signOut();
+                          context.go('/login');
+                          break;
+                      }
+                    },
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'switch_to_provider',
+                        child: ListTile(
+                          leading: Icon(Icons.business),
+                          title: Text('Switch to Provider'),
+                          dense: true,
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'logout',
+                        child: ListTile(
+                          leading: Icon(Icons.logout),
+                          title: Text('Logout'),
+                          dense: true,
+                        ),
+                      ),
+                    ],
+                  )
+                : const SizedBox.shrink(),
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
           ),
         ],
       ),
