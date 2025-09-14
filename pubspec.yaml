@@ -38,17 +38,33 @@ dependencies:
   # State management
   flutter_riverpod: ^2.5.1
   
+  # Navigation
+  go_router: ^14.2.7
+  
   # Supabase for backend services
   supabase_flutter: ^2.5.6
   
   # Map functionality
   flutter_map: ^8.2.1
+  latlong2: ^0.9.1
   
   # Push notifications
   onesignal_flutter: ^5.2.2
   
   # Image picker for file uploads
   image_picker: ^1.0.8
+  
+  # HTTP requests
+  http: ^1.2.2
+  
+  # JSON serialization
+  json_annotation: ^4.9.0
+  
+  # Loading indicators
+  loading_animation_widget: ^1.2.1
+  
+  # Toast messages
+  fluttertoast: ^8.2.8
 
 dev_dependencies:
   flutter_test:
@@ -60,6 +76,10 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  
+  # Code generation
+  build_runner: ^2.4.12
+  json_serializable: ^6.8.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
