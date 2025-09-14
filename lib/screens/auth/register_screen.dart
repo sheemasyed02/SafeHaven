@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../services/auth_service.dart';
+import '../../services/supabase_service.dart';
+import '../../models/user_profile.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../utils/validators.dart';
 
@@ -18,10 +19,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _phoneController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _acceptTerms = false;
+  UserRole _selectedRole = UserRole.customer;
 
   @override
   void dispose() {
@@ -29,6 +32,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
@@ -40,6 +44,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         const SnackBar(
           content: Text('Please accept the terms and conditions'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
         ),
       );
       return;
@@ -50,28 +55,43 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     try {
-      final authService = ref.read(authServiceProvider);
-      await authService.signUp(
+      // Sign up with Supabase and create profile
+      final response = await SupabaseService.instance.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        fullName: _nameController.text.trim(),
+        name: _nameController.text.trim(),
+        role: _selectedRole,
+        phone: _phoneController.text.trim().isNotEmpty 
+            ? _phoneController.text.trim() 
+            : null,
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Account created successfully! Please check your email for verification.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        context.go('/login');
+        if (response.user != null) {
+          // Show success message
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Account created successfully! Please check your email for verification.',
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          
+          // Navigate to login screen
+          context.go('/login');
+        } else {
+          throw Exception('Failed to create account. Please try again.');
+        }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Registration failed: ${e.toString()}'),
+            content: Text(_getErrorMessage(e.toString())),
             backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
           ),
         );
       }
@@ -81,6 +101,20 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  String _getErrorMessage(String error) {
+    if (error.contains('User already registered')) {
+      return 'An account with this email already exists. Please sign in instead.';
+    } else if (error.contains('Password should be at least')) {
+      return 'Password should be at least 6 characters long.';
+    } else if (error.contains('Invalid email')) {
+      return 'Please enter a valid email address.';
+    } else if (error.contains('Signup requires a valid password')) {
+      return 'Please enter a valid password.';
+    } else {
+      return 'Registration failed. Please check your connection and try again.';
     }
   }
 
@@ -217,6 +251,152 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       ),
                       enabled: !_isLoading,
                       onFieldSubmitted: (_) => _signUp(),
+                    ),
+                    
+                    const SizedBox(height: 16),
+                    
+                    // Phone Field (Optional)
+                    TextFormField(
+                      controller: _phoneController,
+                      keyboardType: TextInputType.phone,
+                      textInputAction: TextInputAction.next,
+                      decoration: const InputDecoration(
+                        labelText: 'Phone Number (Optional)',
+                        hintText: 'Enter your phone number',
+                        prefixIcon: Icon(Icons.phone_outlined),
+                      ),
+                      validator: (value) {
+                        if (value != null && value.trim().isNotEmpty) {
+                          return Validators.phone(value);
+                        }
+                        return null; // Optional field
+                      },
+                      enabled: !_isLoading,
+                    ),
+                    
+                    const SizedBox(height: 20),
+                    
+                    // Role Selection
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'I am a:',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Card(
+                                elevation: _selectedRole == UserRole.customer ? 2 : 0,
+                                color: _selectedRole == UserRole.customer
+                                    ? theme.colorScheme.primaryContainer
+                                    : theme.colorScheme.surface,
+                                child: InkWell(
+                                  onTap: _isLoading ? null : () {
+                                    setState(() {
+                                      _selectedRole = UserRole.customer;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.person_outlined,
+                                          size: 32,
+                                          color: _selectedRole == UserRole.customer
+                                              ? theme.colorScheme.onPrimaryContainer
+                                              : theme.colorScheme.onSurfaceVariant,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Customer',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: _selectedRole == UserRole.customer
+                                                ? theme.colorScheme.onPrimaryContainer
+                                                : theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Looking for safety services',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: _selectedRole == UserRole.customer
+                                                ? theme.colorScheme.onPrimaryContainer
+                                                : theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Card(
+                                elevation: _selectedRole == UserRole.provider ? 2 : 0,
+                                color: _selectedRole == UserRole.provider
+                                    ? theme.colorScheme.primaryContainer
+                                    : theme.colorScheme.surface,
+                                child: InkWell(
+                                  onTap: _isLoading ? null : () {
+                                    setState(() {
+                                      _selectedRole = UserRole.provider;
+                                    });
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(16),
+                                    child: Column(
+                                      children: [
+                                        Icon(
+                                          Icons.shield_outlined,
+                                          size: 32,
+                                          color: _selectedRole == UserRole.provider
+                                              ? theme.colorScheme.onPrimaryContainer
+                                              : theme.colorScheme.onSurfaceVariant,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Provider',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: _selectedRole == UserRole.provider
+                                                ? theme.colorScheme.onPrimaryContainer
+                                                : theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Offering safety services',
+                                          textAlign: TextAlign.center,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: _selectedRole == UserRole.provider
+                                                ? theme.colorScheme.onPrimaryContainer
+                                                : theme.colorScheme.onSurfaceVariant,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ),
                     
                     const SizedBox(height: 24),

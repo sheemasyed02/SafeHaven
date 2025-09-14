@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:typed_data';
+import '../models/user_profile.dart';
 
 class SupabaseService {
   static SupabaseService? _instance;
@@ -35,17 +36,102 @@ class SupabaseService {
     );
   }
 
-  /// Sign up with email and password
+  /// Sign up with email and password and create profile
   Future<AuthResponse> signUp({
     required String email,
     required String password,
-    Map<String, dynamic>? data,
+    required String name,
+    required UserRole role,
+    String? phone,
   }) async {
-    return await _client.auth.signUp(
+    final response = await _client.auth.signUp(
       email: email,
       password: password,
-      data: data,
+      data: {
+        'name': name,
+        'role': role.value,
+        'phone': phone,
+      },
     );
+
+    // If signup is successful and user is confirmed, create profile
+    if (response.user != null) {
+      await createUserProfile(
+        userId: response.user!.id,
+        name: name,
+        email: email,
+        role: role,
+        phone: phone,
+      );
+    }
+
+    return response;
+  }
+
+  /// Create user profile in profiles table
+  Future<void> createUserProfile({
+    required String userId,
+    required String name,
+    required String email,
+    required UserRole role,
+    String? phone,
+  }) async {
+    final now = DateTime.now().toIso8601String();
+    
+    await _client.from('profiles').insert({
+      'id': userId,
+      'name': name,
+      'email': email,
+      'role': role.value,
+      'phone': phone,
+      'created_at': now,
+      'updated_at': now,
+    });
+  }
+
+  /// Get user profile by ID
+  Future<UserProfile?> getUserProfile(String userId) async {
+    try {
+      final response = await _client
+          .from('profiles')
+          .select()
+          .eq('id', userId)
+          .single();
+
+      return UserProfile.fromJson(response);
+    } catch (e) {
+      print('Error getting user profile: $e');
+      return null;
+    }
+  }
+
+  /// Get current user's profile
+  Future<UserProfile?> getCurrentUserProfile() async {
+    final user = currentUser;
+    if (user == null) return null;
+    
+    return await getUserProfile(user.id);
+  }
+
+  /// Update user profile
+  Future<void> updateUserProfile({
+    required String userId,
+    String? name,
+    String? phone,
+    String? avatarUrl,
+  }) async {
+    final updates = <String, dynamic>{
+      'updated_at': DateTime.now().toIso8601String(),
+    };
+
+    if (name != null) updates['name'] = name;
+    if (phone != null) updates['phone'] = phone;
+    if (avatarUrl != null) updates['avatar_url'] = avatarUrl;
+
+    await _client
+        .from('profiles')
+        .update(updates)
+        .eq('id', userId);
   }
 
   /// Sign out
