@@ -114,20 +114,25 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
     required UserRole role,
     String? phone,
   }) async {
+    print('AuthProvider: Starting signup process');
     state = state.copyWith(isLoading: true, error: null);
 
     try {
       // Sign up the user
+      print('AuthProvider: Calling Supabase auth signup');
       final response = await Supabase.instance.client.auth.signUp(
         email: email,
         password: password,
       );
+
+      print('AuthProvider: Supabase signup response - User: ${response.user?.id}, Session: ${response.session?.accessToken != null}');
 
       if (response.user == null) {
         throw Exception('Failed to create user account');
       }
 
       // Create user profile
+      print('AuthProvider: Creating user profile');
       await SupabaseService.instance.createUserProfile(
         userId: response.user!.id,
         name: name,
@@ -137,10 +142,13 @@ class AuthStateNotifier extends StateNotifier<AuthState> {
       );
 
       // Get the created profile
+      print('AuthProvider: Fetching created profile');
       final profile = await SupabaseService.instance.getCurrentUserProfile();
       if (profile == null) {
         throw Exception('Failed to retrieve created profile');
       }
+
+      print('AuthProvider: Profile created successfully - Name: ${profile.name}, Role: ${profile.role}');
 
       state = state.copyWith(
         user: response.user,

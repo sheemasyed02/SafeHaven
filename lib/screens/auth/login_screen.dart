@@ -55,14 +55,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ),
           );
 
-          // Redirect based on role
-          if (userProfile.role == UserRole.customer) {
-            context.go('/customer-dashboard');
-          } else if (userProfile.role == UserRole.provider) {
-            context.go('/provider-dashboard');
-          } else {
-            context.go('/home'); // Fallback
-          }
+          // Let the router handle automatic redirection based on user role
+          context.go('/');
         } else {
           // Profile not found, go to home as fallback
           context.go('/home');

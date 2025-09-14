@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../services/supabase_service.dart';
 import '../../models/user_profile.dart';
 import '../../widgets/common/custom_button.dart';
 import '../../utils/validators.dart';
+import '../../providers/auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -55,8 +55,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     try {
-      // Sign up with Supabase and create profile
-      final response = await SupabaseService.instance.signUp(
+      print('Starting signup process...');
+      // Sign up with AuthProvider to ensure proper state management
+      await ref.read(authStateProvider.notifier).signUpWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         name: _nameController.text.trim(),
@@ -66,24 +67,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             : null,
       );
 
+      print('Signup completed successfully');
       if (mounted) {
-        if (response.user != null) {
-          // Show success message
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Account created successfully! Please check your email for verification.',
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Account created successfully! Redirecting to your dashboard...',
             ),
-          );
-          
-          // Navigate to login screen
-          context.go('/login');
-        } else {
-          throw Exception('Failed to create account. Please try again.');
-        }
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        
+        print('Navigating to root to trigger router redirect');
+        // Let the router handle automatic redirection based on user role
+        // The router will detect the authenticated user and redirect appropriately
+        context.go('/');
       }
     } catch (e) {
       if (mounted) {

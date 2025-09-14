@@ -35,21 +35,27 @@ final routerProvider = Provider<GoRouter>((ref) {
 
       // If authenticated and on auth/splash routes, redirect to appropriate dashboard
       if (user != null && (isLoginRoute || isRegisterRoute || isSplashRoute)) {
+        print('User authenticated, checking profile for redirect...');
         try {
           final profile = await SupabaseService.instance.getCurrentUserProfile();
+          print('Profile loaded: ${profile?.name}, Role: ${profile?.role}, CurrentMode: ${profile?.currentMode}');
           if (profile != null) {
             // Use current mode for routing
             switch (profile.currentMode) {
               case UserRole.customer:
+                print('Redirecting to customer dashboard');
                 return '/customer-dashboard';
               case UserRole.provider:
+                print('Redirecting to provider dashboard');
                 return '/provider-dashboard';
             }
           }
           // If no profile or error, go to home to let user set up profile
+          print('No profile found, going to home');
           return '/home';
         } catch (e) {
           // If profile fetch fails, go to home
+          print('Error fetching profile: $e, going to home');
           return '/home';
         }
       }
