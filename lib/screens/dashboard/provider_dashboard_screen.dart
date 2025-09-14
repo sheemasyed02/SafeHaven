@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/supabase_service.dart';
 import '../../models/user_profile.dart';
+import '../../widgets/role_widgets.dart';
 
 class ProviderDashboardScreen extends ConsumerStatefulWidget {
   const ProviderDashboardScreen({super.key});
@@ -93,6 +94,19 @@ class _ProviderDashboardScreenState extends ConsumerState<ProviderDashboardScree
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         actions: [
+          // Role Switch Toggle
+          if (_userProfile != null && _userProfile!.canSwitchRoles)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: RoleSwitchToggle(
+                userProfile: _userProfile!,
+                onRoleChanged: (newRole) {
+                  if (newRole == UserRole.customer) {
+                    context.go('/customer-dashboard');
+                  }
+                },
+              ),
+            ),
           IconButton(
             icon: Badge(
               child: const Icon(Icons.notifications_outlined),
@@ -115,6 +129,11 @@ class _ProviderDashboardScreenState extends ConsumerState<ProviderDashboardScree
                 case 'profile':
                   context.go('/profile');
                   break;
+                case 'verification':
+                  if (_userProfile?.providerStatus != ProviderStatus.verified) {
+                    context.push('/provider-registration', extra: _userProfile);
+                  }
+                  break;
                 case 'settings':
                   // TODO: Navigate to settings
                   break;
@@ -134,6 +153,17 @@ class _ProviderDashboardScreenState extends ConsumerState<ProviderDashboardScree
                   ],
                 ),
               ),
+              if (_userProfile?.providerStatus != ProviderStatus.verified)
+                PopupMenuItem(
+                  value: 'verification',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.verified_outlined),
+                      const SizedBox(width: 12),
+                      Text('Complete Verification'),
+                    ],
+                  ),
+                ),
               PopupMenuItem(
                 value: 'settings',
                 child: Row(
@@ -167,7 +197,7 @@ class _ProviderDashboardScreenState extends ConsumerState<ProviderDashboardScree
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Card
+            // Welcome Card with Status
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -190,6 +220,11 @@ class _ProviderDashboardScreenState extends ConsumerState<ProviderDashboardScree
                             fontSize: 14,
                           ),
                         ),
+                        const Spacer(),
+                        if (_userProfile?.providerStatus != null)
+                          VerificationStatusBadge(
+                            status: _userProfile!.providerStatus!,
+                          ),
                       ],
                     ),
                     const SizedBox(height: 12),
@@ -201,11 +236,57 @@ class _ProviderDashboardScreenState extends ConsumerState<ProviderDashboardScree
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Manage your safety services and bookings',
+                      _userProfile?.providerStatus == ProviderStatus.verified
+                          ? 'Manage your services and grow your business'
+                          : 'Complete your verification to start accepting jobs',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    
+                    // Show availability toggle for verified providers
+                    if (_userProfile?.providerStatus == ProviderStatus.verified) ...[
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Text(
+                            'Availability:',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          if (_userProfile != null)
+                            ProviderStatusBadge(provider: _userProfile!),
+                          const Spacer(),
+                          Switch(
+                            value: _userProfile?.availabilityStatus == AvailabilityStatus.available,
+                            onChanged: (value) {
+                              // TODO: Toggle availability
+                            },
+                          ),
+                        ],
+                      ),
+                    ],
+
+                    // Show verification prompt for unverified providers
+                    if (_userProfile?.providerStatus != ProviderStatus.verified) ...[
+                      const SizedBox(height: 16),
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () {
+                            context.push('/provider-registration', extra: _userProfile);
+                          },
+                          icon: const Icon(Icons.verified),
+                          label: Text(
+                            _userProfile?.providerStatus == ProviderStatus.pending
+                                ? 'Check Verification Status'
+                                : 'Complete Verification',
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

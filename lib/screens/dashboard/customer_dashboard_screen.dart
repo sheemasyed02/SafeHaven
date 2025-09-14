@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/supabase_service.dart';
 import '../../models/user_profile.dart';
+import '../../widgets/role_widgets.dart';
 
 class CustomerDashboardScreen extends ConsumerStatefulWidget {
   const CustomerDashboardScreen({super.key});
@@ -93,6 +94,19 @@ class _CustomerDashboardScreenState extends ConsumerState<CustomerDashboardScree
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         actions: [
+          // Role Switch Toggle
+          if (_userProfile != null && _userProfile!.canSwitchRoles)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: RoleSwitchToggle(
+                userProfile: _userProfile!,
+                onRoleChanged: (newRole) {
+                  if (newRole == UserRole.provider) {
+                    context.go('/provider-dashboard');
+                  }
+                },
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
             onPressed: () {
@@ -112,6 +126,14 @@ class _CustomerDashboardScreenState extends ConsumerState<CustomerDashboardScree
                 case 'profile':
                   context.go('/profile');
                   break;
+                case 'provider':
+                  // Switch to provider registration if not already a provider
+                  if (_userProfile?.role != UserRole.provider) {
+                    context.push('/provider-registration', extra: _userProfile);
+                  } else {
+                    context.go('/provider-dashboard');
+                  }
+                  break;
                 case 'settings':
                   // TODO: Navigate to settings
                   break;
@@ -128,6 +150,20 @@ class _CustomerDashboardScreenState extends ConsumerState<CustomerDashboardScree
                     const Icon(Icons.person_outlined),
                     const SizedBox(width: 12),
                     Text('Profile'),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'provider',
+                child: Row(
+                  children: [
+                    const Icon(Icons.work_outlined),
+                    const SizedBox(width: 12),
+                    Text(
+                      _userProfile?.role == UserRole.provider
+                          ? 'Provider Dashboard'
+                          : 'Become a Provider',
+                    ),
                   ],
                 ),
               ),
@@ -164,7 +200,7 @@ class _CustomerDashboardScreenState extends ConsumerState<CustomerDashboardScree
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Card
+            // Welcome Card with Provider Option
             Card(
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -198,11 +234,67 @@ class _CustomerDashboardScreenState extends ConsumerState<CustomerDashboardScree
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'Find trusted safety services in your area',
+                      'Find trusted and verified service providers',
                       style: theme.textTheme.bodyLarge?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
+                    
+                    // Provider invitation for customers
+                    if (_userProfile?.role != UserRole.provider) ...[
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withOpacity(0.5),
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.work_outlined,
+                              color: theme.colorScheme.primary,
+                              size: 20,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Become a Provider',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      color: theme.colorScheme.primary,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Offer your services and earn money',
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            OutlinedButton(
+                              onPressed: () {
+                                context.push('/provider-registration', extra: _userProfile);
+                              },
+                              style: OutlinedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              ),
+                              child: const Text('Join'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -211,11 +303,24 @@ class _CustomerDashboardScreenState extends ConsumerState<CustomerDashboardScree
             const SizedBox(height: 24),
 
             // Quick Actions
-            Text(
-              'Find Services',
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            // Quick Actions - Browse Services
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Browse Services',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: () {
+                    context.go('/customer-browse');
+                  },
+                  icon: const Icon(Icons.search),
+                  label: const Text('Search All'),
+                ),
+              ],
             ),
             const SizedBox(height: 16),
 
@@ -228,39 +333,57 @@ class _CustomerDashboardScreenState extends ConsumerState<CustomerDashboardScree
               childAspectRatio: 1.2,
               children: [
                 _ServiceCard(
-                  icon: Icons.security,
-                  title: 'Security Guards',
-                  subtitle: 'Personal protection',
+                  icon: Icons.home_repair_service,
+                  title: 'Home Services',
+                  subtitle: 'Plumber, Electrician, Cleaner',
                   color: theme.colorScheme.primary,
                   onTap: () {
-                    // TODO: Navigate to security services
+                    context.go('/customer-browse?category=home_services');
                   },
                 ),
                 _ServiceCard(
-                  icon: Icons.local_taxi,
-                  title: 'Safe Transport',
-                  subtitle: 'Secure rides',
+                  icon: Icons.restaurant,
+                  title: 'Food Services',
+                  subtitle: 'Chef, Baker, Catering',
                   color: theme.colorScheme.secondary,
                   onTap: () {
-                    // TODO: Navigate to transport services
+                    context.go('/customer-browse?category=food_services');
                   },
                 ),
                 _ServiceCard(
-                  icon: Icons.home_outlined,
-                  title: 'Home Security',
-                  subtitle: 'Protect your home',
+                  icon: Icons.person_pin,
+                  title: 'Personal Care',
+                  subtitle: 'Tutor, Driver, Babysitter',
                   color: theme.colorScheme.tertiary,
                   onTap: () {
-                    // TODO: Navigate to home security
+                    context.go('/customer-browse?category=personal_care');
                   },
                 ),
                 _ServiceCard(
-                  icon: Icons.emergency,
-                  title: 'Emergency',
-                  subtitle: 'Quick response',
-                  color: theme.colorScheme.error,
+                  icon: Icons.business_center,
+                  title: 'Professional',
+                  subtitle: 'Photography, Design, Writing',
+                  color: Colors.orange,
                   onTap: () {
-                    // TODO: Navigate to emergency services
+                    context.go('/customer-browse?category=professional_services');
+                  },
+                ),
+                _ServiceCard(
+                  icon: Icons.fitness_center,
+                  title: 'Health & Fitness',
+                  subtitle: 'Massage, Training, Yoga',
+                  color: Colors.green,
+                  onTap: () {
+                    context.go('/customer-browse?category=health_wellness');
+                  },
+                ),
+                _ServiceCard(
+                  icon: Icons.computer,
+                  title: 'Tech Support',
+                  subtitle: 'Computer, Mobile Repair',
+                  color: Colors.blue,
+                  onTap: () {
+                    context.go('/customer-browse?category=tech_support');
                   },
                 ),
               ],

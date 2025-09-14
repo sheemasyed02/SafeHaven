@@ -11,6 +11,9 @@ import '../screens/home/home_screen.dart';
 import '../screens/user/profile_screen.dart';
 import '../screens/dashboard/customer_dashboard_screen.dart';
 import '../screens/dashboard/provider_dashboard_screen.dart';
+import '../screens/provider/provider_registration_screen.dart';
+import '../screens/customer/customer_browse_screen.dart';
+import '../screens/customer/booking_screen.dart';
 
 // Enhanced router with role-based authentication
 final routerProvider = Provider<GoRouter>((ref) {
@@ -93,6 +96,49 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AuthGuard(
           child: ProfileScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/provider-registration',
+        name: 'provider-registration',
+        builder: (context, state) {
+          final userProfile = state.extra as UserProfile?;
+          if (userProfile == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Invalid access to provider registration'),
+              ),
+            );
+          }
+          return AuthGuard(
+            child: ProviderRegistrationScreen(userProfile: userProfile),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/customer-browse',
+        name: 'customer-browse',
+        builder: (context, state) => const RoleGuard(
+          allowedRole: UserRole.customer,
+          child: CustomerBrowseScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/booking',
+        name: 'booking',
+        builder: (context, state) {
+          final provider = state.extra as UserProfile?;
+          if (provider == null) {
+            return const Scaffold(
+              body: Center(
+                child: Text('Invalid access to booking'),
+              ),
+            );
+          }
+          return RoleGuard(
+            allowedRole: UserRole.customer,
+            child: BookingScreen(provider: provider),
+          );
+        },
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
