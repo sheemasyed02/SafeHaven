@@ -22,24 +22,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       label: 'Home',
     ),
     _NavigationItem(
-      icon: Icons.emergency_outlined,
-      selectedIcon: Icons.emergency,
-      label: 'Emergency',
+      icon: Icons.search_outlined,
+      selectedIcon: Icons.search,
+      label: 'Browse',
     ),
     _NavigationItem(
-      icon: Icons.location_on_outlined,
-      selectedIcon: Icons.location_on,
-      label: 'Location',
+      icon: Icons.work_outline,
+      selectedIcon: Icons.work,
+      label: 'Services',
     ),
     _NavigationItem(
-      icon: Icons.contacts_outlined,
-      selectedIcon: Icons.contacts,
-      label: 'Contacts',
-    ),
-    _NavigationItem(
-      icon: Icons.settings_outlined,
-      selectedIcon: Icons.settings,
-      label: 'Settings',
+      icon: Icons.person_outlined,
+      selectedIcon: Icons.person,
+      label: 'Profile',
     ),
   ];
 
@@ -130,10 +125,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
         index: _selectedIndex,
         children: [
           _HomeTab(user: user),
-          _EmergencyTab(),
-          _LocationTab(),
-          _ContactsTab(),
-          _SettingsTab(),
+          _BrowseTab(),
+          _ServicesTab(),
+          _ProfileTab(user: user),
         ],
       ),
       bottomNavigationBar: NavigationBar(
@@ -520,74 +514,65 @@ class _StatusItem extends StatelessWidget {
   }
 }
 
-// Placeholder tabs
-class _EmergencyTab extends StatelessWidget {
+// Browse Tab - Shows service categories
+class _BrowseTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.emergency, size: 64, color: Colors.red),
+          Icon(Icons.search, size: 64, color: Colors.blue),
           SizedBox(height: 16),
-          Text('Emergency Tab', style: TextStyle(fontSize: 24)),
-          Text('Emergency features will be implemented here'),
+          Text('Browse Services', style: TextStyle(fontSize: 24)),
+          Text('Browse and search for service providers'),
         ],
       ),
     );
   }
 }
 
-class _LocationTab extends StatelessWidget {
+// Services Tab - Manage your services if you're a provider
+class _ServicesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.location_on, size: 64, color: Colors.blue),
+          Icon(Icons.work, size: 64, color: Colors.green),
           SizedBox(height: 16),
-          Text('Location Tab', style: TextStyle(fontSize: 24)),
-          Text('Location tracking features will be implemented here'),
+          Text('My Services', style: TextStyle(fontSize: 24)),
+          Text('Manage your service offerings'),
         ],
       ),
     );
   }
 }
 
-class _ContactsTab extends StatelessWidget {
+// Profile Tab - User profile and settings
+class _ProfileTab extends StatelessWidget {
+  final dynamic user;
+
+  const _ProfileTab({required this.user});
+
   @override
   Widget build(BuildContext context) {
     return const Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.contacts, size: 64, color: Colors.green),
+          Icon(Icons.person, size: 64, color: Colors.grey),
           SizedBox(height: 16),
-          Text('Contacts Tab', style: TextStyle(fontSize: 24)),
-          Text('Emergency contacts management will be implemented here'),
+          Text('Profile', style: TextStyle(fontSize: 24)),
+          Text('Manage your profile and settings'),
         ],
       ),
     );
   }
 }
 
-class _SettingsTab extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.settings, size: 64, color: Colors.grey),
-          SizedBox(height: 16),
-          Text('Settings Tab', style: TextStyle(fontSize: 24)),
-          Text('App settings and preferences will be implemented here'),
-        ],
-      ),
-    );
-  }
-}
+
 
 class _ServiceCard extends StatelessWidget {
   final IconData icon;
