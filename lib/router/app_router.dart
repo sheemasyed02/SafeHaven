@@ -9,8 +9,8 @@ import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/user/profile_screen.dart';
-import '../screens/dashboard/customer_dashboard_screen.dart';
-import '../screens/dashboard/provider_dashboard_screen.dart';
+import '../screens/customer/customer_dashboard.dart';
+import '../screens/provider/provider_dashboard.dart';
 import '../screens/provider/provider_registration_screen.dart';
 import '../screens/customer/customer_browse_screen.dart';
 import '../screens/customer/booking_screen.dart';
@@ -82,7 +82,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'customer-dashboard',
         builder: (context, state) => const RoleGuard(
           allowedRole: UserRole.customer,
-          child: CustomerDashboardScreen(),
+          child: CustomerDashboard(),
         ),
       ),
       GoRoute(
@@ -90,7 +90,7 @@ final routerProvider = Provider<GoRouter>((ref) {
         name: 'provider-dashboard',
         builder: (context, state) => const RoleGuard(
           allowedRole: UserRole.provider,
-          child: ProviderDashboardScreen(),
+          child: ProviderDashboard(),
         ),
       ),
       GoRoute(
