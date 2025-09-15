@@ -78,7 +78,7 @@ class SupabaseService {
   }) async {
     final now = DateTime.now().toIso8601String();
     
-    await _client.from('user_profiles').insert({
+    await _client.from('profiles').insert({
       'id': userId,
       'name': name,
       'email': email,
@@ -95,7 +95,7 @@ class SupabaseService {
   Future<UserProfile?> getUserProfile(String userId) async {
     try {
       final response = await _client
-          .from('user_profiles')
+          .from('profiles')
           .select()
           .eq('id', userId)
           .single();
@@ -130,7 +130,7 @@ class SupabaseService {
     if (avatarUrl != null) updates['avatar_url'] = avatarUrl;
 
     await _client
-        .from('user_profiles')
+        .from('profiles')
         .update(updates)
         .eq('id', userId);
   }
@@ -139,7 +139,7 @@ class SupabaseService {
   Future<List<UserProfile>> getProviders() async {
     try {
       final response = await _client
-          .from('user_profiles')
+          .from('profiles')
           .select()
           .eq('role', 'provider')
           .order('created_at', ascending: false);
@@ -158,7 +158,7 @@ class SupabaseService {
   }) async {
     try {
       var query = _client
-          .from('user_profiles')
+          .from('profiles')
           .select()
           .eq('role', 'provider');
 

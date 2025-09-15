@@ -7,6 +7,7 @@ import '../services/supabase_service.dart';
 import '../screens/home/splash_screen.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/auth/register_screen.dart';
+import '../screens/auth/role_selection_screen.dart';
 import '../screens/home/home_screen.dart';
 import '../screens/user/profile_screen.dart';
 import '../screens/customer/customer_dashboard.dart';
@@ -27,7 +28,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       final isRegisterRoute = state.matchedLocation == '/register';
       final isSplashRoute = state.matchedLocation == '/';
       final isHomeRoute = state.matchedLocation == '/home';
-
       // If not authenticated and trying to access protected route
       if (user == null && !isLoginRoute && !isRegisterRoute && !isSplashRoute && !isHomeRoute) {
         return '/login';
@@ -50,13 +50,13 @@ final routerProvider = Provider<GoRouter>((ref) {
                 return '/provider-dashboard';
             }
           }
-          // If no profile or error, go to home to let user set up profile
-          print('No profile found, going to home');
-          return '/home';
+          // If no profile or currentMode not set, go to role selection
+          print('No profile or currentMode found, going to role selection');
+          return '/role-selection';
         } catch (e) {
-          // If profile fetch fails, go to home
-          print('Error fetching profile: $e, going to home');
-          return '/home';
+          // If profile fetch fails, go to role selection
+          print('Error fetching profile: $e, going to role selection');
+          return '/role-selection';
         }
       }
 
@@ -77,6 +77,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/register',
         name: 'register',
         builder: (context, state) => const RegisterScreen(),
+      ),
+      GoRoute(
+        path: '/role-selection',
+        name: 'role-selection',
+        builder: (context, state) => const AuthGuard(
+          child: RoleSelectionScreen(),
+        ),
       ),
       GoRoute(
         path: '/home',
