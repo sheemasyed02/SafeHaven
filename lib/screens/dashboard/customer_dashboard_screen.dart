@@ -94,7 +94,6 @@ class _CustomerDashboardScreenState extends ConsumerState<CustomerDashboardScree
         backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         actions: [
-          // Role Switch Toggle
           if (_userProfile != null && _userProfile!.canSwitchRoles)
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -500,4 +499,5 @@ class _ServiceCard extends StatelessWidget {
       ),
     );
   }
+
 }
