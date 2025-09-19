@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Primary color palette for SafeHaven
   static const Color _primaryColor = Color(0xFF1976D2); 
   static const Color _secondaryColor = Color(0xFF26A69A); 
   static const Color _errorColor = Color(0xFFD32F2F);
   static const Color _successColor = Color(0xFF388E3C);
   static const Color _warningColor = Color(0xFFF57C00);
   
-  // Surface colors
   static const Color _surfaceColor = Color(0xFFFFFBFE);
   static const Color _backgroundLight = Color(0xFFFFFBFE);
   static const Color _backgroundDark = Color(0xFF1C1B1F);
@@ -320,3 +318,4 @@ extension CustomColors on ColorScheme {
   Color get safe => AppTheme.safeColor;
 
 }
+
