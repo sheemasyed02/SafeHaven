@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
-/// SafeHaven app theme configuration with Material 3 design
 class AppTheme {
   // Primary color palette for SafeHaven
-  static const Color _primaryColor = Color(0xFF1976D2); // Professional blue
-  static const Color _secondaryColor = Color(0xFF26A69A); // Teal accent
+  static const Color _primaryColor = Color(0xFF1976D2); 
+  static const Color _secondaryColor = Color(0xFF26A69A); 
   static const Color _errorColor = Color(0xFFD32F2F);
   static const Color _successColor = Color(0xFF388E3C);
   static const Color _warningColor = Color(0xFFF57C00);
@@ -319,4 +318,5 @@ extension CustomColors on ColorScheme {
   Color get warning => AppTheme.warningColor;
   Color get emergency => AppTheme.emergencyColor;
   Color get safe => AppTheme.safeColor;
+
 }
