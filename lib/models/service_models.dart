@@ -32,7 +32,6 @@ class ServiceBooking {
   final DateTime createdAt;
   final DateTime updatedAt;
   
-  // Escrow payment tracking
   final String? escrowTransactionId;
   final PaymentStatus paymentStatus;
   final DateTime? paidAt;
@@ -166,7 +165,7 @@ enum BookingStatus {
 
 /// Payment status for escrow system
 enum PaymentStatus {
-  pending('pending'),           // Payment not made yet
+  pending('pending'),           
   escrowed('escrowed'),        // Payment held in escrow
   released('released'),         // Payment released to provider
   refunded('refunded'),        // Payment refunded to customer
@@ -361,4 +360,5 @@ enum VerificationStatus {
     }
     return VerificationStatus.pending;
   }
+
 }
