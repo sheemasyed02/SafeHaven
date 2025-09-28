@@ -7,7 +7,6 @@ void main() {
   runApp(const ProviderScope(child: SafeHavenApp()));
 }
 
-// Simple router without authentication for testing
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/',
@@ -166,4 +165,5 @@ class SimpleLoginScreen extends StatelessWidget {
       ),
     );
   }
+
 }
